@@ -63,7 +63,7 @@ def calcul_emprunt(profil, capital, taux_interet, date_maturite, VALUE_DATE, per
             discount_factors.append(discount_factor)
             date_actuelle += increment
             interetss = capital_rest * taux_interet_periodique
-            interets.append(interetss)
+            interets.append(annuite)
             amortissement = annuite - interetss
             capital_rest -= amortissement
             table_amortissement[j] = j + 1, pd.to_datetime(date_actuelle,
@@ -84,7 +84,7 @@ def calcul_emprunt(profil, capital, taux_interet, date_maturite, VALUE_DATE, per
             date_actuelle += increment
             interetss = capital_rest * taux_interet_periodique
             annuite = amortissement + interetss
-            interets.append(interetss)
+            interets.append(annuite)
             capital_rest -= amortissement
             table_amortissement[j] = 1, pd.to_datetime(date_actuelle,
                                                        format='%Y-%m-%d'), annuite, interetss, amortissement, capital_rest
