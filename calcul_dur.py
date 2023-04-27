@@ -162,15 +162,15 @@ value_date = st.date_input("Value date")
 periodicite = st.selectbox("Périodicité", ["annuel", "semestriel", "trimestriel", "mensuel"])
 
 if st.button("Calculer"):
-    duree, msg_tci, msg_tsr, df_amortissement = calcul_emprunt(
+    duree, tci, tsr, df_amortissement = calcul_emprunt(
         profil, capital, taux_interet, date_maturite, value_date, periodicite
     )
     st.markdown("<div style='font-weight: bold; color: blue; text-decoration: underline;'>Durée :</div>", unsafe_allow_html=True)
-    st.markdown(f"<div style='font-weight: bold; color: black;'>{duree}</div>", unsafe_allow_html=True)
-    st.markdown("<div style='font-weight: bold; color: blue; text-decoration: underline;'>Message TCI :</div>", unsafe_allow_html=True)
-    st.markdown(f"<div style='font-weight: bold; color: black;'>{msg_tci}</div>", unsafe_allow_html=True)
-    st.markdown("<div style='font-weight: bold; color: blue; text-decoration: underline;'>Message TSR :</div>", unsafe_allow_html=True)
-    st.markdown(f"<div style='font-weight: bold; color: black;'>{msg_tsr}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='font-weight: bold;'>{duree}</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-weight: bold; color: blue; text-decoration: underline;'>TCI :</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='font-weight: bold;'>{tci}</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-weight: bold; color: blue; text-decoration: underline;'>TSR :</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='font-weight: bold;'>{tsr}</div>", unsafe_allow_html=True)
     st.markdown("<div style='font-weight: bold; color: blue; text-decoration: underline;'>Tableau d'amortissement :</div>", unsafe_allow_html=True)
     st.write(df_amortissement)
 
