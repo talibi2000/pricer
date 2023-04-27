@@ -143,10 +143,10 @@ def calcul_emprunt(profil, capital, taux_interet, date_maturite, VALUE_DATE, per
 
         TSR_interpole = linear_interpolation(d1, TSR1, d2, TSR2, duree_vie_ponderee)
         TCI_interpole = linear_interpolation(d1, TCI1, d2, TCI2, duree_vie_ponderee)
-    message_TSR = f"TSR :  {TSR_interpole * 100:.6f} %"
-    message_TCI = f"TCI :  {TCI_interpole * 100:.6f} %"
+    TSR = f"TSR :  {TSR_interpole * 100:.6f} %"
+    TCI = f"TCI :  {TCI_interpole * 100:.6f} %"
     dureee = f"Durée :  {duree_vie_ponderee:.4f} mois {duree_vie_ponderee / 12:.4f} ans"
-    return dureee, message_TCI, message_TSR, df_amortissement
+    return dureee, TCI, TSR, df_amortissement
 
 st.title("Calculateur de remboursement de prêt : Durée, TCI et Écoulement")
 image = Image.open("attijari_logo.png")
