@@ -11,29 +11,28 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 
-def extraire_valeurs(d):
-    if d < 1:
-        d1, d2 = 1, 1
-    elif d < 2:
-        d1, d2 = 1, 2
-    elif d < 3:
-        d1, d2 = 2, 3
-    elif d < 6:
-        d1, d2 = 3, 6
-    elif d < 9:
-        d1, d2 = 6, 9
-    elif d < 12:
-        d1, d2 = 9, 12
-    else:
-        multiplicateur = int(d / 12)
-        d1 = multiplicateur * 12
-        d2 = d1 + 12
-
-    return d1, d2
-
-
 def calcul_emprunt(profil, capital, taux_interet, date_maturite, VALUE_DATE, periodicite):
-    dff = pd.read_excel('TCI.xlsx')
+    def extraire_valeurs(d):
+        if d < 1:
+            d1, d2 = 1, 1
+        elif d < 2:
+            d1, d2 = 1, 2
+        elif d < 3:
+            d1, d2 = 2, 3
+        elif d < 6:
+            d1, d2 = 3, 6
+        elif d < 9:
+            d1, d2 = 6, 9
+        elif d < 12:
+            d1, d2 = 9, 12
+        else:
+            multiplicateur = int(d / 12)
+            d1 = multiplicateur * 12
+            d2 = d1 + 12
+
+        return d1, d2
+
+    dff = pd.read_excel('C:\\Users\\HP\\Desktop\\Output\\TCI.xlsx', sheet_name='DATA')
     if periodicite == 'annuel':
         increment = relativedelta(months=12)
         frequence_paiement = 1
@@ -47,9 +46,8 @@ def calcul_emprunt(profil, capital, taux_interet, date_maturite, VALUE_DATE, per
         increment = relativedelta(months=1)
         frequence_paiement = 12
     periodes = []
-    interets = []
+    flux = []
     discount_factors = []
-
     date_actuelle = VALUE_DATE
     nombre_paiements = int(((date_maturite - VALUE_DATE).days / 365) * frequence_paiement)
     table_amortissement = np.zeros((nombre_paiements, 6), dtype=object)
@@ -58,18 +56,19 @@ def calcul_emprunt(profil, capital, taux_interet, date_maturite, VALUE_DATE, per
         annuite = (capital * taux_interet_periodique) / (1 - (1 + taux_interet_periodique) ** (-nombre_paiements))
         capital_rest = capital
         for j in range(nombre_paiements):
-            periodes.append((date_actuelle - VALUE_DATE).days / 365)
-            discount_factor = 1 / ((1 + taux_interet_periodique) ** ((date_actuelle - VALUE_DATE).days / 365))
-            discount_factors.append(discount_factor)
             date_actuelle += increment
-            interetss = capital_rest * taux_interet_periodique
-            interets.append(annuite)
-            amortissement = annuite - interetss
+            interets = capital_rest * taux_interet_periodique
+            flux.append(annuite)
+            amortissement = annuite - interets
             capital_rest -= amortissement
+            n = int((date_actuelle - VALUE_DATE).days / 360)
+            periodes.append(n)
+            discount_factor = 1 / (1 + ((taux_interet_periodique) ** (periodes[j])))
+            discount_factors.append(discount_factor)
             table_amortissement[j] = j + 1, pd.to_datetime(date_actuelle,
-                                                           format='%Y-%m-%d'), annuite, interetss, amortissement, capital_rest
-        duree_vie_ponderee = 12 * sum([periodes[i] * interets[i] * discount_factors[i] for i in range(len(periodes))]) \
-                             / sum([interets[i] * discount_factors[i] for i in range(len(periodes))])
+                                                           format='%Y-%m-%d'), annuite, interets, amortissement, capital_rest
+        duree_vie_ponderee = 12 * sum([periodes[i] * flux[i] * discount_factors[i] for i in range(len(periodes))]) \
+                             / sum([flux[i] * discount_factors[i] for i in range(len(periodes))])
         df_amortissement = pd.DataFrame(table_amortissement,
                                         columns=['id', "Date d'échéance", 'annuité', 'Intérêts', 'Amortissement',
                                                  'capital rest'])
@@ -78,18 +77,21 @@ def calcul_emprunt(profil, capital, taux_interet, date_maturite, VALUE_DATE, per
         amortissement = capital / nombre_paiements
         capital_rest = capital
         for j in range(nombre_paiements):
-            periodes.append((date_actuelle - VALUE_DATE).days / 365)
-            discount_factor = 1 / ((1 + taux_interet_periodique) ** ((date_actuelle - VALUE_DATE).days / 365))
-            discount_factors.append(discount_factor)
             date_actuelle += increment
-            interetss = capital_rest * taux_interet_periodique
-            annuite = amortissement + interetss
-            interets.append(annuite)
+            interets = capital_rest * taux_interet_periodique
+            annuite = amortissement + interets
+            flux.append(interets)
             capital_rest -= amortissement
+            n = int((date_actuelle - VALUE_DATE).days / 360)
+            periodes.append(n)
+            discount_factor = 1 / (1 + ((taux_interet_periodique) ** (periodes[j])))
+            discount_factors.append(discount_factor)
+            flux.append(annuite)
+
             table_amortissement[j] = 1, pd.to_datetime(date_actuelle,
-                                                       format='%Y-%m-%d'), annuite, interetss, amortissement, capital_rest
-        duree_vie_ponderee = 12 * sum([periodes[i] * interets[i] * discount_factors[i] for i in range(len(periodes))]) \
-                             / sum([interets[i] * discount_factors[i] for i in range(len(periodes))])
+                                                       format='%Y-%m-%d'), annuite, interets, amortissement, capital_rest
+        duree_vie_ponderee = 12 * sum([periodes[i] * flux[i] * discount_factors[i] for i in range(len(periodes))]) \
+                             / sum([flux[i] * discount_factors[i] for i in range(len(periodes))])
         df_amortissement = pd.DataFrame(table_amortissement,
                                         columns=['id', "Date d'échéance", 'annuité', 'Intérêts', 'Amortissement',
                                                  'capital rest'])
@@ -99,23 +101,26 @@ def calcul_emprunt(profil, capital, taux_interet, date_maturite, VALUE_DATE, per
         annuite = capital * taux_interet_periodique
         capital_rest = capital
         for j in range(nombre_paiements):
-            periodes.append((date_actuelle - VALUE_DATE).days / 365)
-            discount_factor = 1 / ((1 + taux_interet_periodique) ** ((date_actuelle - VALUE_DATE).days / 365))
-            discount_factors.append(discount_factor)
-            interetss = capital_rest * taux_interet_periodique
-            interets.append(interetss)
+
+            interets = capital_rest * taux_interet_periodique
+
             if j == nombre_paiements - 1:
                 amortissement = capital
             else:
                 amortissement = 0
-            annuite = interetss + amortissement
+            annuite = interets + amortissement
             date_actuelle += increment
             capital_rest -= amortissement
+            n = int((date_actuelle - VALUE_DATE).days / 360)
+            periodes.append(n)
+            discount_factor = 1 / (1 + ((taux_interet_periodique) ** (periodes[j])))
+            discount_factors.append(discount_factor)
+            flux.append(annuite)
             table_amortissement[j] = 1, pd.to_datetime(date_actuelle,
-                                                       format='%Y-%m-%d'), annuite, interetss, amortissement, capital_rest
+                                                       format='%Y-%m-%d'), annuite, interets, amortissement, capital_rest
 
-        duree_vie_ponderee = 12 * sum([periodes[i] * interets[i] * discount_factors[i] for i in range(len(periodes))]) \
-                             / sum([interets[i] * discount_factors[i] for i in range(len(periodes))])
+        duree_vie_ponderee = 12 * sum([periodes[i] * flux[i] * discount_factors[i] for i in range(len(periodes))]) \
+                             / sum([flux[i] * discount_factors[i] for i in range(len(periodes))])
         df_amortissement = pd.DataFrame(table_amortissement,
                                         columns=['id', "Date d'échéance", 'annuité', 'Intérêts', 'Amortissement',
                                                  'capital rest'])
